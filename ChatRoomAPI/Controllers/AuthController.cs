@@ -4,7 +4,6 @@ using Microsoft.IdentityModel.Tokens;
 using Microsoft.AspNetCore.Authorization;
 using System.IdentityModel.Tokens.Jwt;
 using System.Security.Claims;
-using BCrypt.Net;
 using ChatRoomAPI.Data;
 using ChatRoomAPI.Models;
 using ChatRoomAPI.Models.DTOs;
