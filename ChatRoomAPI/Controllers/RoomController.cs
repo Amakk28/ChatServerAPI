@@ -4,7 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using ChatRoomAPI.Data;
 using ChatRoomAPI.Models;
 using ChatRoomAPI.Models.DTOs;
-using ChatRoomAPI.Hubs;
+
 
 namespace ChatRoomAPI.Controllers
 {
@@ -13,6 +13,7 @@ namespace ChatRoomAPI.Controllers
     [Authorize]
     public class RoomController(AppDbContext context) : ControllerBase
     {
+        [AllowAnonymous]
         [HttpGet]
         public async Task<IActionResult> GetRooms()
         {
@@ -20,6 +21,7 @@ namespace ChatRoomAPI.Controllers
             return Ok(rooms);
         }
 
+        [AllowAnonymous]
         [HttpGet("{id}")]
         public async Task<IActionResult> GetRoom(int id)
         {
@@ -31,8 +33,22 @@ namespace ChatRoomAPI.Controllers
             return Ok(room);
         }
 
+        [HttpGet("{id}/messages")]
+        public async Task<IActionResult> GetRoomMessages(int id)
+        {
+            var room = await context.Rooms.FindAsync(id);
+            if (room == null)
+            {
+                return NotFound("Room not found.");
+            }
+            var messages = await context.Messages
+                .Where(m => m.RoomId == id)
+                .OrderBy(m => m.CreatedAt)
+                .ToListAsync();
+            return Ok(messages);
+        }
+
         [HttpPost]
-        [Authorize]
         public async Task<IActionResult> CreateRoom(CreateRoomDto createRoomDto)
         {
             var room = new Room
@@ -44,20 +60,18 @@ namespace ChatRoomAPI.Controllers
             return CreatedAtAction(nameof(GetRoom), new { id = room.Id }, room);
         }
 
-        [HttpPut("{id}")]
+        [HttpDelete("{id}")]
         [Authorize]
-        public async Task<IActionResult> UpdateRoom(int id) 
+        public async Task<IActionResult> DeleteRoom(int id)
         {
             var room = await context.Rooms.FindAsync(id);
             if (room == null)
             {
                 return NotFound("Room not found.");
             }
-            
             context.Rooms.Remove(room);
             await context.SaveChangesAsync();
             return NoContent();
         }
-
     }
 }

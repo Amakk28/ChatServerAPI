@@ -1,6 +1,39 @@
 @ChatRoomAPI_HostAddress = http://localhost:5148
-
+@token = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxIiwiZW1haWwiOiJnYXlAZW1haWwuY29tIiwidW5pcXVlX25hbWUiOiJnYXlib3kiLCJqdGkiOiI1MTkwMWQ2Ny0wYzlmLTQxMTktOGQzMS0xN2ZlN2NjOWFmZmIiLCJleHAiOjE3Nzk1OTU0MTQsImlzcyI6IkNoYXRBcGkiLCJhdWQiOiJDaGF0Q2xpZW50In0.AJFpULgXWpkiWunTSUL-jJ8bxJjZbeuA4MElq9OB_os
 GET {{ChatRoomAPI_HostAddress}}
 Accept: application/json
 
-###
+### Register
+POST https://localhost:7113/api/auth/register
+Content-Type: application/json
+
+{
+    "username": "gayboy",
+    "email": "gay@email.com",
+    "password": "gayboy"
+}
+
+### Login
+POST https://localhost:7113/api/auth/login
+Content-Type: application/json
+
+{
+    "email": "gay@email.com",
+    "password": "gayboy"
+}
+
+### Get Rooms
+GET https://localhost:7113/api/room
+
+### Create Room
+POST https://localhost:7113/api/room
+Content-Type: application/json
+Authorization: Bearer {{token}}
+
+{
+    "name": "Lobby"
+}
+
+### Get Room Messages
+GET https://localhost:7113/api/room/1/messages
+Authorization: Bearer {{token}}
