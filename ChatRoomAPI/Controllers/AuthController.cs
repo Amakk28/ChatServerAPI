@@ -65,7 +65,7 @@ namespace ChatRoomAPI.Controllers
             }
             
             var token = GenerateToken(user);
-            return Ok(new {token, user.Username, user.Email});
+            return Ok(new LoginResponseDto { Token = token, Username = user.Username, Email = user.Email, UserId = user.Id });
         }
 
         private string GenerateToken(User user)

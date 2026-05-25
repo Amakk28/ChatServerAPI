@@ -151,5 +151,13 @@ namespace ChatRoomAPI.Hubs
                 .ToList();
             await Clients.Caller.SendAsync("OnlineUsersInRoom", usersInRoom);
         }
+
+        public static Dictionary<string, int> GetOnlineUserCounts()
+        {
+            return OnlineUsers.Values
+                .Where(roomId => roomId != null)
+                .GroupBy(roomId => roomId)
+                .ToDictionary(g => g.Key!, g => g.Count());
+        }
     }
 }

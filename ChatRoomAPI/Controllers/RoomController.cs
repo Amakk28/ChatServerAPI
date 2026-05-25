@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using ChatRoomAPI.Data;
 using ChatRoomAPI.Models;
 using ChatRoomAPI.Models.DTOs;
+using ChatRoomAPI.Hubs;
 
 
 namespace ChatRoomAPI.Controllers
@@ -13,12 +14,23 @@ namespace ChatRoomAPI.Controllers
     [Authorize]
     public class RoomController(AppDbContext context) : ControllerBase
     {
+
         [AllowAnonymous]
         [HttpGet]
         public async Task<IActionResult> GetRooms()
         {
             var rooms = await context.Rooms.ToListAsync();
-            return Ok(rooms);
+            var onlineUserCounts = ChatHub.GetOnlineUserCounts(); // Get online user counts for all rooms
+        
+            var roomsWithOnlineCounts = rooms.Select(room => new RoomDto
+            {
+                Id = room.Id,
+                Name = room.Name,
+                CreatedAt = room.CreatedAt,
+                OnlineUsers = onlineUserCounts.TryGetValue(room.Id.ToString(), out var count) ? count : 0
+            });
+
+            return Ok(roomsWithOnlineCounts);
         }
 
         [AllowAnonymous]
