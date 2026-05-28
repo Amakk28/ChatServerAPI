@@ -96,42 +96,11 @@ namespace ChatRoomAPI.Hubs
                 await Clients.Caller.SendAsync("NotInRoom");
                 return;
             }
-            // Save user's message to DB and verify if room exists
-            var room = await _db.Rooms.FindAsync(int.Parse(roomId));
-            if (room == null)            {
-                await Clients.Caller.SendAsync("RoomNotFound", roomId);
-                return;
-            }
-            int userId;
-            if (int.TryParse(Context.UserIdentifier, out var parsedUserId))
-            {
-                userId = parsedUserId;
-            }
-            else
-            {
-                await Clients.Caller.SendAsync("InvalidUser");
-                return;
-            }
-
-            // Save message 
-            var chatMessage = new Message
-            {
-                Content = message,
-                UserId = userId,
-                CreatedAt = DateTime.UtcNow,
-                RoomId = int.Parse(roomId)
-            };
-            _db.Messages.Add(chatMessage);
-            await _db.SaveChangesAsync();
-
-            
-
+            // Send message to group directly
             await Clients.Group(roomId).SendAsync("ReceiveMessage", new ChatMessageDto
             {
-                Id = chatMessage.Id,
-                RoomId = chatMessage.RoomId,
-                Content = chatMessage.Content,
-                CreatedAt = chatMessage.CreatedAt,
+                Content = message,
+                CreatedAt = DateTime.UtcNow,
                 SenderUsername = Context.User?.FindFirst(JwtRegisteredClaimNames.UniqueName)?.Value ?? "Unknown"
             });
         }

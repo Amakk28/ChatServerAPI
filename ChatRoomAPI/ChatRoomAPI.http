@@ -1,5 +1,5 @@
 @ChatRoomAPI_HostAddress = chathubgame-csahbkcqa2asefgy.centralus-01.azurewebsites.net
-@token = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxIiwiZW1haWwiOiJnYXlAZW1haWwuY29tIiwidW5pcXVlX25hbWUiOiJnYXlib3kiLCJqdGkiOiI1MTkwMWQ2Ny0wYzlmLTQxMTktOGQzMS0xN2ZlN2NjOWFmZmIiLCJleHAiOjE3Nzk1OTU0MTQsImlzcyI6IkNoYXRBcGkiLCJhdWQiOiJDaGF0Q2xpZW50In0.AJFpULgXWpkiWunTSUL-jJ8bxJjZbeuA4MElq9OB_os
+@token = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxIiwiZW1haWwiOiJnYXlAZW1haWwuY29tIiwidW5pcXVlX25hbWUiOiJnYXlib3kiLCJqdGkiOiJjMDc4ZWZjOC0zMThjLTQwNWEtYTFkMC1mNWE1NmM0YmIwNTIiLCJleHAiOjE3Nzk5Mzc4NDQsImlzcyI6IkNoYXRBcGkiLCJhdWQiOiJDaGF0Q2xpZW50In0.5QDRw3S0acKMeXazCcZWE-1IqjTRCNnEgS20Bmi2rS8
 GET {{ChatRoomAPI_HostAddress}}
 Accept: application/json
 
@@ -11,6 +11,15 @@ Content-Type: application/json
     "username": "gayboy",
     "email": "gay@email.com",
     "password": "gayboy"
+}
+###
+POST {{ChatRoomAPI_HostAddress}}/api/auth/register
+Content-Type: application/json
+
+{
+    "username": "admin",
+    "email": "admin",
+    "password": "admin"
 }
 
 ### Login
