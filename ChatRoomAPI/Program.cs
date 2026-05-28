@@ -53,4 +53,4 @@ app.MapControllers();
 app.MapHub<ChatHub>("/chat");
 
 
-app.Run("http://0.0.0.0:8080");
+app.Run();
