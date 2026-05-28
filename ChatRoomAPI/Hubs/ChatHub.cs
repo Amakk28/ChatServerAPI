@@ -43,6 +43,9 @@ namespace ChatRoomAPI.Hubs
         // When a client joins a room
         public async Task JoinRoom(int roomId)
         {
+            // Create User DTO
+            var user = await _db.Users.FindAsync(int.Parse(Context.UserIdentifier ?? "0"));
+            UserDto userDto = UserDto.FromUser(user!);
             // Check if room exists in database
             var room = await _db.Rooms.FindAsync(roomId);
             if (room == null)
@@ -58,10 +61,10 @@ namespace ChatRoomAPI.Hubs
             }
             // Update Online Users map
             OnlineUsers[Context.ConnectionId] = room.Id.ToString();
+            
             // Add client to the room group
             await Groups.AddToGroupAsync(Context.ConnectionId, room.Id.ToString());
-            await Clients.Caller.SendAsync("RoomJoined", room.Name);
-            await Clients.Group(room.Id.ToString()).SendAsync("UserJoinedRoom", Context.User?.FindFirst(JwtRegisteredClaimNames.UniqueName)?.Value ?? "Unknown");
+            await Clients.Group(room.Id.ToString()).SendAsync("UserJoinedRoom", userDto);
         }
         
         // When a client leaves a room
@@ -83,7 +86,6 @@ namespace ChatRoomAPI.Hubs
             OnlineUsers[Context.ConnectionId] = null;
             // Remove client from the room group
             await Groups.RemoveFromGroupAsync(Context.ConnectionId, room.Id.ToString());
-            await Clients.Caller.SendAsync("RoomLeft", room.Name);
             await Clients.Group(room.Id.ToString()).SendAsync("UserLeftRoom", Context.User?.FindFirst(JwtRegisteredClaimNames.UniqueName)?.Value ?? "Unknown");
         }
 

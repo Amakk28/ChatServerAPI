@@ -7,5 +7,6 @@ namespace ChatRoomAPI.Models
         public string Email { get; set; } = string.Empty;
         public string PasswordHash { get; set; } = string.Empty;
         public DateTime CreatedAt { get; set; } = DateTime.UtcNow; // User creation date
+        public string TextColor { get; set; } = "white";
     }
 }
