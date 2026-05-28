@@ -1,10 +1,10 @@
-@ChatRoomAPI_HostAddress = http://localhost:5148
+@ChatRoomAPI_HostAddress = chathubgame-csahbkcqa2asefgy.centralus-01.azurewebsites.net
 @token = eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxIiwiZW1haWwiOiJnYXlAZW1haWwuY29tIiwidW5pcXVlX25hbWUiOiJnYXlib3kiLCJqdGkiOiI1MTkwMWQ2Ny0wYzlmLTQxMTktOGQzMS0xN2ZlN2NjOWFmZmIiLCJleHAiOjE3Nzk1OTU0MTQsImlzcyI6IkNoYXRBcGkiLCJhdWQiOiJDaGF0Q2xpZW50In0.AJFpULgXWpkiWunTSUL-jJ8bxJjZbeuA4MElq9OB_os
 GET {{ChatRoomAPI_HostAddress}}
 Accept: application/json
 
 ### Register
-POST https://localhost:7113/api/auth/register
+POST {{ChatRoomAPI_HostAddress}}/api/auth/register
 Content-Type: application/json
 
 {
@@ -14,7 +14,7 @@ Content-Type: application/json
 }
 
 ### Login
-POST https://localhost:7113/api/auth/login
+POST {{ChatRoomAPI_HostAddress}}/api/auth/login
 Content-Type: application/json
 
 {
@@ -23,10 +23,10 @@ Content-Type: application/json
 }
 
 ### Get Rooms
-GET https://localhost:7113/api/room
+GET {{ChatRoomAPI_HostAddress}}/api/room
 
 ### Create Room
-POST https://localhost:7113/api/room
+POST {{ChatRoomAPI_HostAddress}}/api/room
 Content-Type: application/json
 Authorization: Bearer {{token}}
 
@@ -35,5 +35,5 @@ Authorization: Bearer {{token}}
 }
 
 ### Get Room Messages
-GET https://localhost:7113/api/room/1/messages
+GET {{ChatRoomAPI_HostAddress}}/api/room/1/messages
 Authorization: Bearer {{token}}
