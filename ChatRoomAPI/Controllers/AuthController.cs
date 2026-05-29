@@ -46,7 +46,8 @@ namespace ChatRoomAPI.Controllers
             {
                 Username = registerDto.Username,
                 Email = registerDto.Email,
-                PasswordHash = BCrypt.Net.BCrypt.HashPassword(registerDto.Password)
+                PasswordHash = BCrypt.Net.BCrypt.HashPassword(registerDto.Password),
+                TextColor = "white"
             };
 
             context.Users.Add(user);
@@ -65,7 +66,7 @@ namespace ChatRoomAPI.Controllers
             }
             
             var token = GenerateToken(user);
-            return Ok(new LoginResponseDto { Token = token, Username = user.Username, Email = user.Email, UserId = user.Id });
+            return Ok(new LoginResponseDto { Token = token, User = new UserDto { Id = user.Id, Email = user.Email, Username = user.Username, TextColor = user.TextColor } });
         }
 
         private string GenerateToken(User user)
