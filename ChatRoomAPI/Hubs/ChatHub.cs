@@ -98,6 +98,7 @@ namespace ChatRoomAPI.Hubs
         // When a client sends a message to the hub
         public async Task SendMessage(string message)
         {
+            var user = await _db.Users.FindAsync(int.Parse(Context.UserIdentifier ?? "0"));
             // Verify if user is in the room
             if (!OnlineUsers.TryGetValue(Context.ConnectionId, out var roomId) || roomId == null)
             {
@@ -109,7 +110,8 @@ namespace ChatRoomAPI.Hubs
             {
                 Content = message,
                 CreatedAt = DateTime.UtcNow,
-                SenderUsername = Context.User?.FindFirst(JwtRegisteredClaimNames.UniqueName)?.Value ?? "Unknown"
+                SenderUsername = user!.Username,
+                TextColor = user.TextColor
             });
         }
 

@@ -11,6 +11,7 @@ namespace ChatRoomAPI.Models.DTOs
         public int RoomId { get; set; }
         public string Content { get; set; } = string.Empty;
         public DateTime CreatedAt { get; set; }
-        public string SenderUsername { get; set; } = string.Empty;
+        public required string SenderUsername { get; set; } 
+        public required string TextColor { get; set; } 
     }
 }
