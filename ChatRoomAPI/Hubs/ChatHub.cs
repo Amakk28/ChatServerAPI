@@ -18,6 +18,9 @@ namespace ChatRoomAPI.Hubs
         // roomId can be null, indicating the user is in the lobby
         static readonly ConcurrentDictionary<string, string?> OnlineUsers = new();
 
+        // Map of game states for each room, roomId -> GameState
+        static readonly ConcurrentDictionary<string, GameState> GameStates = new();
+
         // When a client connects to the hub
         public override async Task OnConnectedAsync()
         {

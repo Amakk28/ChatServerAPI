@@ -63,10 +63,20 @@ namespace ChatRoomAPI.Controllers
         [HttpPost]
         public async Task<IActionResult> CreateRoom(CreateRoomDto createRoomDto)
         {
+            var gameState = new GameState
+            {
+                CurrentTurnPlayerId = createRoomDto.HostUserId,
+                TurnNumber = 0
+            };
             var room = new Room
             {
-                Name = createRoomDto.Name
+                HostUserId = createRoomDto.HostUserId,
+                GameState = gameState,
+                Name = createRoomDto.Name,
+                CreatedAt = DateTime.UtcNow
             };
+            gameState.Room = room; // Set the navigation property
+            gameState.RoomId = room.Id; // Set the foreign key
             context.Rooms.Add(room);
             await context.SaveChangesAsync();
             return CreatedAtAction(nameof(GetRoom), new { id = room.Id }, room);

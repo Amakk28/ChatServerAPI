@@ -22,6 +22,22 @@ namespace ChatRoomAPI.Migrations
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
 
+            modelBuilder.Entity("ChatRoomAPI.Models.GameState", b =>
+                {
+                    b.Property<int>("RoomId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("CurrentTurnPlayerId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("TurnNumber")
+                        .HasColumnType("int");
+
+                    b.HasKey("RoomId");
+
+                    b.ToTable("GameStates");
+                });
+
             modelBuilder.Entity("ChatRoomAPI.Models.Message", b =>
                 {
                     b.Property<int>("Id")
@@ -59,6 +75,9 @@ namespace ChatRoomAPI.Migrations
                     b.Property<DateTime>("CreatedAt")
                         .HasColumnType("datetime2");
 
+                    b.Property<int>("HostUserId")
+                        .HasColumnType("int");
+
                     b.Property<string>("Name")
                         .IsRequired()
                         .HasColumnType("nvarchar(max)");
@@ -66,6 +85,39 @@ namespace ChatRoomAPI.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("Rooms");
+                });
+
+            modelBuilder.Entity("ChatRoomAPI.Models.Unit", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("GameStateRoomId")
+                        .HasColumnType("int");
+
+                    b.Property<bool>("HasMoved")
+                        .HasColumnType("bit");
+
+                    b.Property<int>("Health")
+                        .HasColumnType("int");
+
+                    b.Property<int>("OwnerPlayerId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("X")
+                        .HasColumnType("int");
+
+                    b.Property<int>("Y")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("GameStateRoomId");
+
+                    b.ToTable("Units");
                 });
 
             modelBuilder.Entity("ChatRoomAPI.Models.User", b =>
@@ -98,6 +150,38 @@ namespace ChatRoomAPI.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("Users");
+                });
+
+            modelBuilder.Entity("ChatRoomAPI.Models.GameState", b =>
+                {
+                    b.HasOne("ChatRoomAPI.Models.Room", "Room")
+                        .WithOne("GameState")
+                        .HasForeignKey("ChatRoomAPI.Models.GameState", "RoomId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Room");
+                });
+
+            modelBuilder.Entity("ChatRoomAPI.Models.Unit", b =>
+                {
+                    b.HasOne("ChatRoomAPI.Models.GameState", "GameState")
+                        .WithMany("Units")
+                        .HasForeignKey("GameStateRoomId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("GameState");
+                });
+
+            modelBuilder.Entity("ChatRoomAPI.Models.GameState", b =>
+                {
+                    b.Navigation("Units");
+                });
+
+            modelBuilder.Entity("ChatRoomAPI.Models.Room", b =>
+                {
+                    b.Navigation("GameState");
                 });
 #pragma warning restore 612, 618
         }
