@@ -14,7 +14,6 @@ namespace ChatRoomAPI.Controllers
     [Authorize]
     public class RoomController(AppDbContext context) : ControllerBase
     {
-
         [AllowAnonymous]
         [HttpGet]
         public async Task<IActionResult> GetRooms()
@@ -63,6 +62,12 @@ namespace ChatRoomAPI.Controllers
         [HttpPost]
         public async Task<IActionResult> CreateRoom(CreateRoomDto createRoomDto)
         {
+            // Check if host user matches the authenticated user
+            var userId = int.Parse(User.Claims.FirstOrDefault(c => c.Type == "UserId")?.Value ?? "0");
+            if (createRoomDto.HostUserId != userId)
+            {
+                return Forbid("Host user ID does not match authenticated user.");
+            }
             var gameState = new GameState
             {
                 CurrentTurnPlayerId = createRoomDto.HostUserId,
@@ -78,6 +83,7 @@ namespace ChatRoomAPI.Controllers
             gameState.Room = room; // Set the navigation property
             gameState.RoomId = room.Id; // Set the foreign key
             context.Rooms.Add(room);
+            context.GameStates.Add(gameState); // Add the GameState to the context
             await context.SaveChangesAsync();
             return CreatedAtAction(nameof(GetRoom), new { id = room.Id }, room);
         }
@@ -86,6 +92,12 @@ namespace ChatRoomAPI.Controllers
         [Authorize]
         public async Task<IActionResult> DeleteRoom(int id)
         {
+            // Check if host user matches the authenticated user
+            var userId = int.Parse(User.Claims.FirstOrDefault(c => c.Type == "UserId")?.Value ?? "0");
+            if (!await context.Rooms.AnyAsync(r => r.Id == id && r.HostUserId == userId))
+            {
+                return Forbid("Host user ID does not match authenticated user.");
+            }
             var room = await context.Rooms.FindAsync(id);
             if (room == null)
             {
