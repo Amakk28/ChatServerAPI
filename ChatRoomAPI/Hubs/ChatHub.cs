@@ -133,6 +133,20 @@ namespace ChatRoomAPI.Hubs
                 .ToList();
             await Clients.Caller.SendAsync("OnlineUsersInRoom", usersInRoom);
         }
+        
+        // Method to update the text color of a user
+        public async Task UpdateTextColor(string newColor)
+        {
+            var user = await _db.Users.FindAsync(int.Parse(Context.UserIdentifier ?? "0"));
+            if (user == null)
+            {
+                await Clients.Caller.SendAsync("UserNotFound");
+                return;
+            }
+            user.TextColor = newColor;
+            await _db.SaveChangesAsync();
+            await Clients.Caller.SendAsync("TextColorUpdated", newColor);
+        }
 
         public static Dictionary<string, int> GetOnlineUserCounts()
         {

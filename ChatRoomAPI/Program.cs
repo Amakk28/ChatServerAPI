@@ -8,6 +8,7 @@ using ChatRoomAPI.Hubs;
 using ChatRoomAPI.Services;
 
 var builder = WebApplication.CreateBuilder(args);
+// Load environment variables from .env file or deployment environment or dotnet user-secrets
 var connectionString = Environment.GetEnvironmentVariable("DB_CONNECTION_STRING") ?? builder.Configuration.GetConnectionString("DefaultConnection");    
 var jwtKey = Environment.GetEnvironmentVariable("JWT_KEY") ?? builder.Configuration["Jwt:Key"]!;
 var jwtIssuer = Environment.GetEnvironmentVariable("JWT_ISSUER") ?? builder.Configuration["Jwt:Issuer"]!;
