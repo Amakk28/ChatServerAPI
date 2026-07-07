@@ -13,6 +13,6 @@ namespace ChatRoomAPI.Models
         public Room? Room { get; set; } // Navigation property to Room
         public required int CurrentTurnPlayerId { get; set; }
         public int TurnNumber { get; set; }
-        public List<Unit> Units { get; set; } = new();
+        public List<Unit> Units { get; set; } = [];
     }
 }

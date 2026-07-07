@@ -71,6 +71,7 @@ namespace ChatRoomAPI.Hubs
             // Add client to the room group
             await Groups.AddToGroupAsync(Context.ConnectionId, room.Id.ToString());
             await Clients.Group(room.Id.ToString()).SendAsync("UserJoinedRoom", userDto);
+            
         }
         
         // When a client leaves a room

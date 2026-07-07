@@ -44,6 +44,26 @@ namespace ChatRoomAPI.Controllers
             return Ok(room);
         }
 
+        [HttpGet("{id}/gamestate")]
+        public async Task<IActionResult> GetRoomGameState(int id)
+        {
+            var gameState = await context.GameStates.FindAsync(id);
+            if (gameState == null)
+            {
+                return NotFound("GameState not found.");
+            }
+            return Ok(gameState);
+        }
+
+        [HttpGet("{id}/units")]
+        public async Task<IActionResult> GetRoomUnits(int id)
+        {
+            var units = await context.Units
+                .Where(u => u.GameStateRoomId == id)
+                .ToListAsync();
+            return Ok(units);
+        }
+
         [HttpGet("{id}/messages")]
         public async Task<IActionResult> GetRoomMessages(int id)
         {
@@ -68,6 +88,7 @@ namespace ChatRoomAPI.Controllers
             {
                 return Forbid("Host user ID does not match authenticated user.");
             }
+            // So when the user creates a new room, we also create a new GameState for that room
             var gameState = new GameState
             {
                 CurrentTurnPlayerId = createRoomDto.HostUserId,
@@ -86,6 +107,31 @@ namespace ChatRoomAPI.Controllers
             context.GameStates.Add(gameState); // Add the GameState to the context
             await context.SaveChangesAsync();
             return CreatedAtAction(nameof(GetRoom), new { id = room.Id }, room);
+        }
+
+        // Register a created Unit to the current GameState of the room
+        [HttpPost("units")]
+        public async Task<IActionResult> CreateUnit(CreateUnitDto createUnitDto)
+        {
+            var gameStateRoomId = createUnitDto.GameStateRoomId;
+            var gameState = await context.GameStates.FindAsync(gameStateRoomId);
+            if (gameState == null)
+            {
+                return NotFound("GameState not found for the specified room.");
+            }
+            var unit = new Unit
+            {
+                OwnerPlayerId = createUnitDto.OwnerPlayerId,
+                X = createUnitDto.X,
+                Y = createUnitDto.Y,
+                Health = createUnitDto.Health,
+                HasMoved = createUnitDto.HasMoved,
+                GameStateRoomId = gameStateRoomId,
+                GameState = gameState
+            };
+            context.Units.Add(unit);
+            await context.SaveChangesAsync();
+            return CreatedAtAction(nameof(GetRoomUnits), new { id = gameStateRoomId }, unit);
         }
 
         [HttpDelete("{id}")]
