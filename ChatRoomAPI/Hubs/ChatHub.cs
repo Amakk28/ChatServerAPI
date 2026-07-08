@@ -50,6 +50,11 @@ namespace ChatRoomAPI.Hubs
         // Sync game state in memory with database, like a save in memory
         public async Task SyncGameState(GameStateDto gameState)
         {
+            if (gameState == null)
+            {
+                await Clients.Groups(Context.ConnectionId).SendAsync("GameStateNotFound");
+                return;
+            }
             GameStates.AddOrUpdate(gameState.RoomId, gameState, (key, old) => gameState);
             await Clients.Group(gameState.RoomId.ToString()).SendAsync("SyncGameState", gameState);
         }
