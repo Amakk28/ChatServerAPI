@@ -20,7 +20,7 @@ namespace ChatRoomAPI.Hubs
         static readonly ConcurrentDictionary<string, string?> OnlineUsers = new();
 
         // Map of game states for each room, roomId -> GameState
-        static readonly ConcurrentDictionary<int, GameState> GameStates = new();
+        static readonly ConcurrentDictionary<int, GameStateDto> GameStates = new();
 
         // When a client connects to the hub
         public override async Task OnConnectedAsync()
@@ -48,7 +48,7 @@ namespace ChatRoomAPI.Hubs
         }
         
         // Sync game state in memory with database, like a save in memory
-        public async Task SyncGameState(GameState gameState)
+        public async Task SyncGameState(GameStateDto gameState)
         {
             GameStates.AddOrUpdate(gameState.RoomId, gameState, (key, old) => gameState);
             await Clients.Group(gameState.RoomId.ToString()).SendAsync("SyncGameState", gameState);
@@ -57,45 +57,60 @@ namespace ChatRoomAPI.Hubs
         // When a client joins a room
         public async Task JoinRoom(int roomId)
         {
-            // Create User DTO
             var user = await _db.Users.FindAsync(int.Parse(Context.UserIdentifier ?? "0"));
-            UserDto userDto = UserDto.FromUser(user!);
-            // Check if room exists in database
+            if (user == null)
+            {
+                await Clients.Caller.SendAsync("UserNotFound");
+                return;
+            }
+
+            var userDto = UserDto.FromUser(user);
+
             var room = await _db.Rooms.FindAsync(roomId);
             if (room == null)
             {
                 await Clients.Caller.SendAsync("RoomNotFound", roomId);
                 return;
             }
-            // If user is already in a room, remove them from it
+
             if (OnlineUsers.TryGetValue(Context.ConnectionId, out var currentRoomId) && currentRoomId != null)
             {
                 await Groups.RemoveFromGroupAsync(Context.ConnectionId, currentRoomId);
-                await Clients.Group(currentRoomId).SendAsync("UserLeftRoom", Context.User?.FindFirst(JwtRegisteredClaimNames.UniqueName)?.Value ?? "Unknown");
+                await Clients.Group(currentRoomId).SendAsync("UserLeftRoom", user.Username);
             }
-            // Update Online Users map
+
             OnlineUsers[Context.ConnectionId] = room.Id.ToString();
-            
-            // Add client to the room group
             await Groups.AddToGroupAsync(Context.ConnectionId, room.Id.ToString());
 
-            // Sync the game state and send a copy of game state to client after joining room
             var gameState = await _db.GameStates
                 .Include(gs => gs.Units)
                 .FirstOrDefaultAsync(gs => gs.RoomId == room.Id);
 
-            if (gameState != null)
-            {
-                GameStates.AddOrUpdate(room.Id, gameState, (key, old) => gameState);
-                await Clients.Caller.SendAsync("SyncGameState", gameState);
-            }
-            else
+            if (gameState == null)
             {
                 await Clients.Caller.SendAsync("GameStateNotFound", room.Id);
+                return;
             }
 
+            var gameStateDto = new GameStateDto
+            {
+                RoomId = gameState.RoomId,
+                CurrentTurnPlayerId = gameState.CurrentTurnPlayerId,
+                TurnNumber = gameState.TurnNumber,
+                Units = gameState.Units.Select(u => new UnitDto
+                {
+                    Id = u.Id,
+                    OwnerPlayerId = u.OwnerPlayerId,
+                    X = u.X,
+                    Y = u.Y,
+                    Health = u.Health,
+                    HasMoved = u.HasMoved
+                }).ToList()
+            };
+
+            GameStates.AddOrUpdate(room.Id, gameStateDto, (key, old) => gameStateDto);
+            await Clients.Caller.SendAsync("SyncGameState", gameStateDto);
             await Clients.Group(room.Id.ToString()).SendAsync("UserJoinedRoom", userDto);
-            
         }
         
         // When a client leaves a room
