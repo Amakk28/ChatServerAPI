@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Authorization;
 using ChatRoomAPI.Data;
 using ChatRoomAPI.Models;
 using ChatRoomAPI.Models.DTOs;
+using Microsoft.EntityFrameworkCore;
 
 
 namespace ChatRoomAPI.Hubs
@@ -19,7 +20,7 @@ namespace ChatRoomAPI.Hubs
         static readonly ConcurrentDictionary<string, string?> OnlineUsers = new();
 
         // Map of game states for each room, roomId -> GameState
-        static readonly ConcurrentDictionary<string, GameState> GameStates = new();
+        static readonly ConcurrentDictionary<int, GameState> GameStates = new();
 
         // When a client connects to the hub
         public override async Task OnConnectedAsync()
@@ -46,6 +47,13 @@ namespace ChatRoomAPI.Hubs
             await base.OnDisconnectedAsync(exception);
         }
         
+        // Sync game state in memory with database, like a save in memory
+        public async Task SyncGameState(GameState gameState)
+        {
+            GameStates.AddOrUpdate(gameState.RoomId, gameState, (key, old) => gameState);
+            await Clients.Group(gameState.RoomId.ToString()).SendAsync("SyncGameState", gameState);
+        }
+
         // When a client joins a room
         public async Task JoinRoom(int roomId)
         {
@@ -70,6 +78,22 @@ namespace ChatRoomAPI.Hubs
             
             // Add client to the room group
             await Groups.AddToGroupAsync(Context.ConnectionId, room.Id.ToString());
+
+            // Sync the game state and send a copy of game state to client after joining room
+            var gameState = await _db.GameStates
+                .Include(gs => gs.Units)
+                .FirstOrDefaultAsync(gs => gs.RoomId == room.Id);
+
+            if (gameState != null)
+            {
+                GameStates.AddOrUpdate(room.Id, gameState, (key, old) => gameState);
+                await Clients.Caller.SendAsync("SyncGameState", gameState);
+            }
+            else
+            {
+                await Clients.Caller.SendAsync("GameStateNotFound", room.Id);
+            }
+
             await Clients.Group(room.Id.ToString()).SendAsync("UserJoinedRoom", userDto);
             
         }

@@ -110,11 +110,11 @@ namespace ChatRoomAPI.Controllers
         }
 
         // Register a created Unit to the current GameState of the room
-        [HttpPost("units")]
-        public async Task<IActionResult> CreateUnit(CreateUnitDto createUnitDto)
+        [HttpPost("{id}/units")]
+        public async Task<IActionResult> CreateUnit(int id, CreateUnitDto createUnitDto)
         {
-            var gameStateRoomId = createUnitDto.GameStateRoomId;
-            var gameState = await context.GameStates.FindAsync(gameStateRoomId);
+            var gameStateRoomId = id;
+            var gameState = await context.GameStates.FindAsync(id);
             if (gameState == null)
             {
                 return NotFound("GameState not found for the specified room.");
@@ -126,7 +126,7 @@ namespace ChatRoomAPI.Controllers
                 Y = createUnitDto.Y,
                 Health = createUnitDto.Health,
                 HasMoved = createUnitDto.HasMoved,
-                GameStateRoomId = gameStateRoomId,
+                GameStateRoomId = id,
                 GameState = gameState
             };
             context.Units.Add(unit);
