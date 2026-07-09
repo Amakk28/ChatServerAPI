@@ -59,7 +59,7 @@ namespace ChatRoomAPI.Controllers
         public async Task<IActionResult> GetRoomUnits(int id)
         {
             var units = await context.Units
-                .Where(u => u.GameStateRoomId == id)
+                .Where(u => u.GameStateId == id)
                 .ToListAsync();
             return Ok(units);
         }
@@ -126,7 +126,7 @@ namespace ChatRoomAPI.Controllers
                 Y = createUnitDto.Y,
                 Health = createUnitDto.Health,
                 HasMoved = createUnitDto.HasMoved,
-                GameStateRoomId = id,
+                GameStateId = id,
                 GameState = gameState
             };
             context.Units.Add(unit);

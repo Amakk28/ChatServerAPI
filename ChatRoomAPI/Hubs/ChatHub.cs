@@ -6,6 +6,7 @@ using ChatRoomAPI.Data;
 using ChatRoomAPI.Models;
 using ChatRoomAPI.Models.DTOs;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.VisualBasic;
 
 
 namespace ChatRoomAPI.Hubs
@@ -46,13 +47,51 @@ namespace ChatRoomAPI.Hubs
 
             await base.OnDisconnectedAsync(exception);
         }
-        
+
+        // Take in Unit data from client, make a unit and update the database and cache it.
+        public async Task CreateUnit(UnitDto unitDto)
+        {
+            var gameState = await _db.GameStates.FindAsync(unitDto.GameStateId);
+            if (gameState == null)
+            {
+                await Clients.Caller.SendAsync("GameStateNotFound", unitDto.GameStateId);
+                return;
+            }
+
+            var unit = new Unit
+            {
+                OwnerPlayerId = unitDto.OwnerPlayerId,
+                X = unitDto.X,
+                Y = unitDto.Y,
+                Health = unitDto.Health,
+                HasMoved = unitDto.HasMoved,
+                GameStateId = unitDto.GameStateId,
+                GameState = gameState
+            };
+
+            _db.Units.Add(unit);
+            await _db.SaveChangesAsync();
+            // Cache it as well
+            GameStates.TryGetValue(gameState.RoomId, out GameStateDto? gameStateDto);
+            if (gameStateDto == null)
+            {
+                await Clients.Caller.SendAsync("FatalSync");
+                return;
+            }
+            unitDto.Id = unit.Id;
+            gameStateDto.Units.Add(unitDto);
+            // Broadcast
+            await Clients.Group(gameState.RoomId.ToString()).SendAsync("SyncGameState", gameStateDto);
+            
+        }
+
+
         // Sync game state in memory with database, like a save in memory
         public async Task SyncGameState(GameStateDto gameState)
         {
             if (gameState == null)
             {
-                await Clients.Groups(Context.ConnectionId).SendAsync("GameStateNotFound");
+                await Clients.Caller.SendAsync("GameStateNotFound", gameState?.RoomId);
                 return;
             }
             GameStates.AddOrUpdate(gameState.RoomId, gameState, (key, old) => gameState);

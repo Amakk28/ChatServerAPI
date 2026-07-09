@@ -17,6 +17,7 @@ namespace ChatRoomAPI.Models.DTOs
     {
         public int Id { get; set; }
         public int OwnerPlayerId { get; set; }
+        public int GameStateId {get; set;}
         public int X { get; set; }
         public int Y { get; set; }
         public int Health { get; set; }
