@@ -83,6 +83,7 @@ namespace ChatRoomAPI.Hubs
             gameStateDto.Units.Add(unitDto);
             // Broadcast
             await Clients.Group(gameState.RoomId.ToString()).SendAsync("SyncGameState", gameStateDto);
+            await Clients.Group(gameState.RoomId.ToString()).SendAsync("NewUserJoined", gameStateDto, unitDto.OwnerPlayerId);
             
         }
 
