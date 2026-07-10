@@ -103,60 +103,6 @@ namespace ChatRoomAPI.Hubs
         // When a client joins a room, FIX YOU NEED TO CHECK IF THERE IS ALREADY PLAYER ONLINE, OR GAMESTATE EXISTS IN CACHE
         public async Task JoinRoom(int roomId)
         {
-            // var user = await _db.Users.FindAsync(int.Parse(Context.UserIdentifier ?? "0"));
-            // if (user == null)
-            // {
-            //     await Clients.Caller.SendAsync("UserNotFound");
-            //     return;
-            // }
-
-            // var userDto = UserDto.FromUser(user);
-
-            // var room = await _db.Rooms.FindAsync(roomId);
-            // if (room == null)
-            // {
-            //     await Clients.Caller.SendAsync("RoomNotFound", roomId);
-            //     return;
-            // }
-
-            // if (OnlineUsers.TryGetValue(Context.ConnectionId, out var currentRoomId) && currentRoomId != null)
-            // {
-            //     await Groups.RemoveFromGroupAsync(Context.ConnectionId, currentRoomId);
-            //     await Clients.Group(currentRoomId).SendAsync("UserLeftRoom", user.Username);
-            // }
-
-            // OnlineUsers[Context.ConnectionId] = room.Id.ToString();
-            // await Groups.AddToGroupAsync(Context.ConnectionId, room.Id.ToString());
-            // // Check first with cache, not db
-            // var gameState = await _db.GameStates
-            //     .Include(gs => gs.Units)
-            //     .FirstOrDefaultAsync(gs => gs.RoomId == room.Id);
-
-            // if (gameState == null)
-            // {
-            //     await Clients.Caller.SendAsync("GameStateNotFound", room.Id);
-            //     return;
-            // }
-
-            // var gameStateDto = new GameStateDto
-            // {
-            //     RoomId = gameState.RoomId,
-            //     CurrentTurnPlayerId = gameState.CurrentTurnPlayerId,
-            //     TurnNumber = gameState.TurnNumber,
-            //     Units = gameState.Units.Select(u => new UnitDto
-            //     {
-            //         Id = u.Id,
-            //         OwnerPlayerId = u.OwnerPlayerId,
-            //         X = u.X,
-            //         Y = u.Y,
-            //         Health = u.Health,
-            //         HasMoved = u.HasMoved
-            //     }).ToList()
-            // };
-
-            // GameStates.AddOrUpdate(room.Id, gameStateDto, (key, old) => gameStateDto);
-            // await Clients.Caller.SendAsync("SyncGameState", gameStateDto);
-            // await Clients.Group(room.Id.ToString()).SendAsync("UserJoinedRoom", userDto);
             var user = await _db.Users.FindAsync(int.Parse(Context.UserIdentifier ?? "0"));
             if (user == null)
             {
