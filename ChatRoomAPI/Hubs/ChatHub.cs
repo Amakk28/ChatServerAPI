@@ -7,6 +7,7 @@ using ChatRoomAPI.Models;
 using ChatRoomAPI.Models.DTOs;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.VisualBasic;
+using System.Runtime.InteropServices;
 
 
 namespace ChatRoomAPI.Hubs
@@ -89,6 +90,7 @@ namespace ChatRoomAPI.Hubs
         // Sync game state in memory with database, like a save in memory
         public async Task SyncGameState(GameStateDto gameState)
         {
+            Console.WriteLine($"Server received position: {gameState.Units[0].X}, {gameState.Units[0].Y}");
             if (gameState == null)
             {
                 await Clients.Caller.SendAsync("GameStateNotFound", gameState?.RoomId);
