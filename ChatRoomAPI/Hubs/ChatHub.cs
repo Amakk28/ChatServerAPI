@@ -66,8 +66,10 @@ namespace ChatRoomAPI.Hubs
                 // CONTINUE WORKING                     
                 }
                 // User was in a room, remove them from it
+                var user = await _db.Users.FindAsync(int.Parse(Context.UserIdentifier ?? "0"));
+                UserDto userDto = UserDto.FromUser(user!);
                 await Groups.RemoveFromGroupAsync(Context.ConnectionId, roomId);
-                await Clients.Group(roomId).SendAsync("UserDisconnected", Context.User?.FindFirst(JwtRegisteredClaimNames.UniqueName)?.Value ?? "Unknown");
+                await Clients.Group(roomId).SendAsync("UserDisconnected", userDto);
             }
 
             await base.OnDisconnectedAsync(exception);
