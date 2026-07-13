@@ -6,8 +6,6 @@ using ChatRoomAPI.Data;
 using ChatRoomAPI.Models;
 using ChatRoomAPI.Models.DTOs;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.VisualBasic;
-using System.Runtime.InteropServices;
 
 
 namespace ChatRoomAPI.Hubs
@@ -45,8 +43,18 @@ namespace ChatRoomAPI.Hubs
                 // A disconnected user must have their data saved to the database, and they player data removed from cache
                 if (GameStates.TryGetValue(int.Parse(roomId), out GameStateDto? gameStateDto))
                 {
+
                     // Find unit belonging to user that disconnected, and remove it from cache
                     UnitDto? unit = gameStateDto.Units.Find(u => u.OwnerPlayerId == int.Parse(Context.UserIdentifier!));
+                    // Save unit state to database
+                    // var dbUnit = await _db.Units.FindAsync(unit?.OwnerPlayerId);
+                    // if (dbUnit != null)
+                    // {
+                    //     dbUnit.X = unit.X;
+                    //     dbUnit.Y = unit.Y;
+                    //     dbUnit.Health = unit.Health;
+                    //     await _db.SaveChangesAsync();
+                    // }
                     if (unit != null) 
                     {
                         gameStateDto.Units.Remove(unit);
@@ -109,13 +117,17 @@ namespace ChatRoomAPI.Hubs
             // Broadcast
             await Clients.OthersInGroup(gameState.RoomId.ToString()).SendAsync("NewUserJoined", gameStateDto, unitDto.OwnerPlayerId);
             await Clients.Group(gameState.RoomId.ToString()).SendAsync("SyncGameState", gameStateDto);
-            
         }
-
 
         // Sync game state in memory with database, like a save in memory
         public async Task SyncGameState(GameStateDto gameState)
         {
+            // Verify that the user sending the data is actually from the room they say they are
+            if (!OnlineUsers.TryGetValue(Context.ConnectionId, out var roomId) || roomId != gameState.RoomId.ToString())
+            {
+                await Clients.Caller.SendAsync("UnauthorizedSync");
+                return;
+            }
             // Console.WriteLine($"Server received position: {gameState.Units[0].X}, {gameState.Units[0].Y}");
             if (gameState == null)
             {
@@ -215,7 +227,7 @@ namespace ChatRoomAPI.Hubs
             OnlineUsers[Context.ConnectionId] = null;
             // Remove client from the room group
             await Groups.RemoveFromGroupAsync(Context.ConnectionId, room.Id.ToString());
-            await Clients.Group(room.Id.ToString()).SendAsync("UserDisconnected", userDto);
+            await Clients.Group(room.Id.ToString()).SendAsync("UserLeftRoom", userDto);
         }
 
         // When a client sends a message to the hub
