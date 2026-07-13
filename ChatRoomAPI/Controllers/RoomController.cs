@@ -89,11 +89,7 @@ namespace ChatRoomAPI.Controllers
                 return Forbid("Host user ID does not match authenticated user.");
             }
             // So when the user creates a new room, we also create a new GameState for that room
-            var gameState = new GameState
-            {
-                CurrentTurnPlayerId = createRoomDto.HostUserId,
-                TurnNumber = 0
-            };
+            GameState? gameState = null;
             var room = new Room
             {
                 HostUserId = createRoomDto.HostUserId,
@@ -101,8 +97,14 @@ namespace ChatRoomAPI.Controllers
                 Name = createRoomDto.Name,
                 CreatedAt = DateTime.UtcNow
             };
-            gameState.Room = room; // Set the navigation property
-            gameState.RoomId = room.Id; // Set the foreign key
+            gameState = new GameState
+            {
+                OwnerId = createRoomDto.HostUserId,
+                RoomId = room.Id,
+                CurrentTurnPlayerId = createRoomDto.HostUserId,
+                TurnNumber = 0,
+                Room = room // Set the navigation property
+            };
             context.Rooms.Add(room);
             context.GameStates.Add(gameState); // Add the GameState to the context
             await context.SaveChangesAsync();
