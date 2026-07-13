@@ -40,44 +40,38 @@ namespace ChatRoomAPI.Hubs
         {
             if (OnlineUsers.TryRemove(Context.ConnectionId, out var roomId) && roomId != null)
             {
-                // A disconnected user must have their data saved to the database, and they player data removed from cache
+                // Save the game state of the room that the player disconnected from to the database
                 if (GameStates.TryGetValue(int.Parse(roomId), out GameStateDto? gameStateDto))
                 {
-
-                    // Find unit belonging to user that disconnected, and remove it from cache
-                    UnitDto? unit = gameStateDto.Units.Find(u => u.OwnerPlayerId == int.Parse(Context.UserIdentifier!));
-                    // Save unit state to database
-                    // var dbUnit = await _db.Units.FindAsync(unit?.OwnerPlayerId);
-                    // if (dbUnit != null)
-                    // {
-                    //     dbUnit.X = unit.X;
-                    //     dbUnit.Y = unit.Y;
-                    //     dbUnit.Health = unit.Health;
-                    //     await _db.SaveChangesAsync();
-                    // }
-                    if (unit != null) 
+                    var dbGameState = await _db.GameStates
+                        .Include(gs => gs.Units)
+                        .FirstOrDefaultAsync(gs => gs.RoomId == int.Parse(roomId));
+                    if (dbGameState != null)
                     {
-                        gameStateDto.Units.Remove(unit);
-                        Console.WriteLine("User Disconnected, Cache data freed");
-                    }    
-                    // Free memory in cache, the whole game state if the user is the owner, or just the specific unit otherwise
-                    // if (gameStateDto.OwnerId == int.Parse(Context.UserIdentifier!))
-                    // {
-                    //     if (GameStates.TryRemove(int.Parse(roomId), out gameStateDto))
-                    //     {
-                    //         Console.WriteLine("Host User Disconnected, Cache data freed");
-                    //     }
-                    // }  
-                    // else
-                    // {
-                    // }
-                // CONTINUE WORKING                     
+                        dbGameState.CurrentTurnPlayerId = gameStateDto.CurrentTurnPlayerId;
+                        dbGameState.TurnNumber = gameStateDto.TurnNumber;
+                    }
+                    foreach (UnitDto unitDto in gameStateDto.Units)
+                    {
+                        var dbUnit = dbGameState?.Units.FirstOrDefault(u => u.OwnerPlayerId == unitDto.OwnerPlayerId);
+                        if (dbUnit != null)
+                        {
+                            dbUnit.X = unitDto.X;
+                            dbUnit.Y = unitDto.Y;
+                            dbUnit.Health = unitDto.Health;
+                            dbUnit.HasMoved = unitDto.HasMoved;
+                        }
+                    }
+                    await _db.SaveChangesAsync();
+                    Console.WriteLine($"Game state saved for room {roomId} on disconnect");
                 }
                 // User was in a room, remove them from it
-                var user = await _db.Users.FindAsync(int.Parse(Context.UserIdentifier ?? "0"));
-                UserDto userDto = UserDto.FromUser(user!);
-                await Groups.RemoveFromGroupAsync(Context.ConnectionId, roomId);
-                await Clients.Group(roomId).SendAsync("UserDisconnected", userDto);
+                var user = await _db.Users.FindAsync(int.Parse(Context.UserIdentifier!));
+                if (user != null) {
+                    UserDto userDto = UserDto.FromUser(user);
+                    await Groups.RemoveFromGroupAsync(Context.ConnectionId, roomId);
+                    await Clients.Group(roomId).SendAsync("UserDisconnected", userDto);
+                }
             }
 
             await base.OnDisconnectedAsync(exception);
