@@ -7,7 +7,8 @@ namespace ChatRoomAPI.Models.DTOs
 {
     public class GameStateDto
     {
-        public int RoomId { get; set; }
+        public required int RoomId { get; set; }
+        public required int OwnerId {get; set;}
         public int CurrentTurnPlayerId { get; set; }
         public int TurnNumber { get; set; }
         public List<UnitDto> Units { get; set; } = [];
@@ -15,9 +16,8 @@ namespace ChatRoomAPI.Models.DTOs
 
     public class UnitDto
     {
-        public int Id { get; set; }
-        public int OwnerPlayerId { get; set; }
-        public int GameStateId {get; set;}
+        public required int OwnerPlayerId { get; set; }
+        public required int GameStateId {get; set;}
         public int X { get; set; }
         public int Y { get; set; }
         public int Health { get; set; }

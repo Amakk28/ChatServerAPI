@@ -10,6 +10,7 @@ namespace ChatRoomAPI.Models
     {
         [Key]
         public int RoomId { get; set; }
+        public int OwnerId {get; set;}
         public Room? Room { get; set; } // Navigation property to Room
         public required int CurrentTurnPlayerId { get; set; }
         public int TurnNumber { get; set; }

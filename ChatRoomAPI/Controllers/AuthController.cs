@@ -33,7 +33,7 @@ namespace ChatRoomAPI.Controllers
             return Ok(new { user.Username, user.Email });
         }
 
-        // Registration endpoint
+        // Registration 
         [HttpPost("register")]
         public async Task<IActionResult> Register(RegisterDto registerDto)
         {

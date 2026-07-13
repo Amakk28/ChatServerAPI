@@ -23,6 +23,7 @@ namespace ChatRoomAPI.Hubs
 
         // Map of game states for each room, roomId -> GameState
         static readonly ConcurrentDictionary<int, GameStateDto> GameStates = new();
+        // Map of to derive user id easily, connectionId -> userId
 
         // When a client connects to the hub
         public override async Task OnConnectedAsync()
@@ -41,9 +42,32 @@ namespace ChatRoomAPI.Hubs
         {
             if (OnlineUsers.TryRemove(Context.ConnectionId, out var roomId) && roomId != null)
             {
+                // A disconnected user must have their data saved to the database, and they player data removed from cache
+                if (GameStates.TryGetValue(int.Parse(roomId), out GameStateDto? gameState))
+                {
+                    // Free memory in cache, the whole game state if the user is the owner, or just the specific unit otherwise
+                    if (gameState.OwnerId == int.Parse(Context.UserIdentifier!))
+                    {
+                        if (GameStates.TryRemove(int.Parse(roomId), out gameState))
+                        {
+                            Console.WriteLine("Host User Disconnected, Cache data freed");
+                        }
+                    }  
+                    else
+                    {
+                        // Find unit belonging to user that disconnected, and remove it from cache
+                        UnitDto? unit = gameState.Units.Find(u => u.OwnerPlayerId == int.Parse(Context.UserIdentifier!));
+                        if (unit != null) 
+                        {
+                            gameState.Units.Remove(unit);
+                            Console.WriteLine("User Disconnected, Cache data freed");
+                        }    
+                    }
+                // CONTINUE WORKING                     
+                }
                 // User was in a room, remove them from it
                 await Groups.RemoveFromGroupAsync(Context.ConnectionId, roomId);
-                await Clients.Group(roomId).SendAsync("UserLeftRoom", Context.User?.FindFirst(JwtRegisteredClaimNames.UniqueName)?.Value ?? "Unknown");
+                await Clients.Group(roomId).SendAsync("UserDisconnected", Context.User?.FindFirst(JwtRegisteredClaimNames.UniqueName)?.Value ?? "Unknown");
             }
 
             await base.OnDisconnectedAsync(exception);
@@ -79,7 +103,6 @@ namespace ChatRoomAPI.Hubs
                 await Clients.Caller.SendAsync("FatalSync");
                 return;
             }
-            unitDto.Id = unit.Id;
             gameStateDto.Units.Add(unitDto);
             // Broadcast
             await Clients.OthersInGroup(gameState.RoomId.ToString()).SendAsync("NewUserJoined", gameStateDto, unitDto.OwnerPlayerId);
@@ -101,7 +124,7 @@ namespace ChatRoomAPI.Hubs
             await Clients.Group(gameState.RoomId.ToString()).SendAsync("SyncGameState", gameState);
         }
 
-        // When a client joins a room, FIX YOU NEED TO CHECK IF THERE IS ALREADY PLAYER ONLINE, OR GAMESTATE EXISTS IN CACHE
+        // When a client joins a room
         public async Task JoinRoom(int roomId)
         {
             var user = await _db.Users.FindAsync(int.Parse(Context.UserIdentifier ?? "0"));
@@ -143,13 +166,14 @@ namespace ChatRoomAPI.Hubs
 
                 gameStateDto = new GameStateDto
                 {
+                    OwnerId = gameState.OwnerId,
                     RoomId = gameState.RoomId,
                     CurrentTurnPlayerId = gameState.CurrentTurnPlayerId,
                     TurnNumber = gameState.TurnNumber,
                     Units = gameState.Units.Select(u => new UnitDto
                     {
-                        Id = u.Id,
                         OwnerPlayerId = u.OwnerPlayerId,
+                        GameStateId = u.GameStateId,
                         X = u.X,
                         Y = u.Y,
                         Health = u.Health,
@@ -189,7 +213,7 @@ namespace ChatRoomAPI.Hubs
             OnlineUsers[Context.ConnectionId] = null;
             // Remove client from the room group
             await Groups.RemoveFromGroupAsync(Context.ConnectionId, room.Id.ToString());
-            await Clients.Group(room.Id.ToString()).SendAsync("UserLeftRoom", userDto);
+            await Clients.Group(room.Id.ToString()).SendAsync("UserDisconnected", userDto);
         }
 
         // When a client sends a message to the hub
