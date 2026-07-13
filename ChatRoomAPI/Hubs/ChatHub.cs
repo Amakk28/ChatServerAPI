@@ -43,12 +43,12 @@ namespace ChatRoomAPI.Hubs
             if (OnlineUsers.TryRemove(Context.ConnectionId, out var roomId) && roomId != null)
             {
                 // A disconnected user must have their data saved to the database, and they player data removed from cache
-                if (GameStates.TryGetValue(int.Parse(roomId), out GameStateDto? gameState))
+                if (GameStates.TryGetValue(int.Parse(roomId), out GameStateDto? gameStateDto))
                 {
                     // Free memory in cache, the whole game state if the user is the owner, or just the specific unit otherwise
-                    if (gameState.OwnerId == int.Parse(Context.UserIdentifier!))
+                    if (gameStateDto.OwnerId == int.Parse(Context.UserIdentifier!))
                     {
-                        if (GameStates.TryRemove(int.Parse(roomId), out gameState))
+                        if (GameStates.TryRemove(int.Parse(roomId), out gameStateDto))
                         {
                             Console.WriteLine("Host User Disconnected, Cache data freed");
                         }
@@ -56,10 +56,10 @@ namespace ChatRoomAPI.Hubs
                     else
                     {
                         // Find unit belonging to user that disconnected, and remove it from cache
-                        UnitDto? unit = gameState.Units.Find(u => u.OwnerPlayerId == int.Parse(Context.UserIdentifier!));
+                        UnitDto? unit = gameStateDto.Units.Find(u => u.OwnerPlayerId == int.Parse(Context.UserIdentifier!));
                         if (unit != null) 
                         {
-                            gameState.Units.Remove(unit);
+                            gameStateDto.Units.Remove(unit);
                             Console.WriteLine("User Disconnected, Cache data freed");
                         }    
                     }
@@ -70,6 +70,7 @@ namespace ChatRoomAPI.Hubs
                 UserDto userDto = UserDto.FromUser(user!);
                 await Groups.RemoveFromGroupAsync(Context.ConnectionId, roomId);
                 await Clients.Group(roomId).SendAsync("UserDisconnected", userDto);
+                await Clients.Group(roomId).SendAsync("SyncGameState", gameStateDto); // Trigger the update on the clients side when a user disconnects immediately 
             }
 
             await base.OnDisconnectedAsync(exception);
