@@ -149,17 +149,20 @@ namespace ChatRoomAPI.Hubs
                 await Clients.Caller.SendAsync("RoomNotFound", roomId);
                 return;
             }
-
+            // If the user is already in a room, remove them from that room first
             if (OnlineUsers.TryGetValue(Context.ConnectionId, out var currentRoomId) && currentRoomId != null)
             {
                 await Groups.RemoveFromGroupAsync(Context.ConnectionId, currentRoomId);
-                await Clients.Group(currentRoomId).SendAsync("UserLeftRoom", user.Username);
+                await Clients.Group(currentRoomId).SendAsync("UserLeftRoom", userDto);
             }
 
             OnlineUsers[Context.ConnectionId] = room.Id.ToString();
             await Groups.AddToGroupAsync(Context.ConnectionId, room.Id.ToString());
 
-            // Check cache first, only read from DB if not in cache
+            // Check cache first, only read from DB if not in cache, the reason I do this is because if the 
+            // game state was already in memory from being loaded by another player joining that room,
+            // then we don't want to overwrite it with the database version which may be outdated.
+            // If the game state is not in memory, then we read from the database and cache it for the sake of efficiency
             if (!GameStates.TryGetValue(room.Id, out GameStateDto? gameStateDto) || gameStateDto == null)
             {
                 var gameState = await _db.GameStates
