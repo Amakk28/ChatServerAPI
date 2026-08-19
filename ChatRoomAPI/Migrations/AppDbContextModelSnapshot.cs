@@ -116,6 +116,9 @@ namespace ChatRoomAPI.Migrations
                     b.Property<int>("Y")
                         .HasColumnType("int");
 
+                    b.Property<int>("Z")
+                        .HasColumnType("int");
+
                     b.HasKey("Id");
 
                     b.HasIndex("GameStateId");
