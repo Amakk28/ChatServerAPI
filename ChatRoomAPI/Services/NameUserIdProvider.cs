@@ -1,4 +1,4 @@
-using Microsoft.AspNetCore.SignalR;
+/* using Microsoft.AspNetCore.SignalR;
 using System.IdentityModel.Tokens.Jwt;
 
 namespace ChatRoomAPI.Services
@@ -10,4 +10,4 @@ namespace ChatRoomAPI.Services
             return connection.User?.FindFirst(JwtRegisteredClaimNames.Sub)?.Value ?? "Unknown";
         }
     }
-}
+} */

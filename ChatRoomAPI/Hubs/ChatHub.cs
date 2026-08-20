@@ -1,4 +1,4 @@
-using System.IdentityModel.Tokens.Jwt;
+/* using System.IdentityModel.Tokens.Jwt;
 using Microsoft.AspNetCore.SignalR;
 using System.Collections.Concurrent;
 using Microsoft.AspNetCore.Authorization;
@@ -15,9 +15,11 @@ namespace ChatRoomAPI.Hubs
     {
         private readonly AppDbContext _db = db;
 
-        // Current Memory Map of Online Users, connectionId -> roomId
+        // Current Memory Map of Online Users, userId -> roomId
         // roomId can be null, indicating the user is in the lobby
-        static readonly ConcurrentDictionary<string, string?> OnlineUsers = new();
+        static readonly ConcurrentDictionary<int, int?> OnlineUsers = new();
+        // Map for userId to connectionId, each user can only have one connection at a time
+        static readonly ConcurrentDictionary<int, string> UserConnections = new();
 
         // Map of game states for each room, roomId -> GameState
         static readonly ConcurrentDictionary<int, GameStateDto> GameStates = new();
@@ -28,9 +30,23 @@ namespace ChatRoomAPI.Hubs
         {
             // Create User DTO
             var user = await _db.Users.FindAsync(int.Parse(Context.UserIdentifier ?? "0"));
-            UserDto userDto = UserDto.FromUser(user!);
-            
-            OnlineUsers.TryAdd(Context.ConnectionId, null); 
+            if (user == null)
+            {
+                await Clients.Caller.SendAsync("UserNotFound");
+                Context.Abort();
+                return;
+            }
+            UserDto userDto = UserDto.FromUser(user);
+
+            // Check if user is already connected, if so reject the new connection
+            if (UserConnections.ContainsKey(user.Id))
+            {
+                await Clients.Caller.SendAsync("AlreadyConnected");
+                Context.Abort();
+                return;
+            }
+            UserConnections.TryAdd(user.Id, Context.ConnectionId);
+            OnlineUsers.TryAdd(user.Id, null); // User is in the lobby by default
             await Clients.Caller.SendAsync("Connected", userDto);
             await base.OnConnectedAsync();
         }
@@ -285,4 +301,4 @@ namespace ChatRoomAPI.Hubs
                 .ToDictionary(g => g.Key!, g => g.Count());
         }
     }
-}
+} */

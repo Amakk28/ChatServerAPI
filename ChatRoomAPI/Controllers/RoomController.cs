@@ -4,7 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using ChatRoomAPI.Data;
 using ChatRoomAPI.Models;
 using ChatRoomAPI.Models.DTOs;
-using ChatRoomAPI.Hubs;
+// using ChatRoomAPI.Hubs;
 
 
 namespace ChatRoomAPI.Controllers
@@ -19,7 +19,8 @@ namespace ChatRoomAPI.Controllers
         public async Task<IActionResult> GetRooms()
         {
             var rooms = await context.Rooms.ToListAsync();
-            var onlineUserCounts = ChatHub.GetOnlineUserCounts(); // Get online user counts for all rooms
+            // var onlineUserCounts = ChatHub.GetOnlineUserCounts(); // Get online user counts for all rooms
+            var onlineUserCounts = new Dictionary<string, int>();
         
             var roomsWithOnlineCounts = rooms.Select(room => new RoomDto
             {
