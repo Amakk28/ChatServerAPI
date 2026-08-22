@@ -59,12 +59,14 @@ namespace ChatRoomAPI.Controllers
         [HttpPost("login")]
         public async Task<IActionResult> Login(LoginDto loginDto)
         {
+            Console.WriteLine($"Login attempt for email: {loginDto.Email}");
             var user = await context.Users.FirstOrDefaultAsync(u => u.Email == loginDto.Email);
             if (user == null || !BCrypt.Net.BCrypt.Verify(loginDto.Password, user.PasswordHash))
             {
+                Console.WriteLine("Login failed: Invalid email or password.");
                 return Unauthorized("Invalid email or password.");
             }
-            
+            Console.WriteLine("Login successful.");
             var token = GenerateToken(user);
             return Ok(new LoginResponseDto { Token = token, User = new UserDto { Id = user.Id, Email = user.Email, Username = user.Username, TextColor = user.TextColor } });
         }
