@@ -12,6 +12,7 @@ namespace ChatRoomAPI.Models.DTOs
         public int CurrentTurnPlayerId { get; set; }
         public int TurnNumber { get; set; }
         public List<UnitDto> Units { get; set; } = [];
+
     }
 
     public class UnitDto

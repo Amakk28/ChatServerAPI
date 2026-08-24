@@ -13,7 +13,7 @@ namespace ChatRoomAPI.Controllers
 {
     [ApiController]
     [Route("api/[controller]")]
-    public class AuthController(AppDbContext context, IConfiguration configuration) : ControllerBase
+    public class AuthController(AppDbContext context, IConfiguration configuration, ILogger<AuthController> logger) : ControllerBase
     {
         // Profile Lookup endpoint
         [HttpGet("profile")]
@@ -39,6 +39,7 @@ namespace ChatRoomAPI.Controllers
         {
             if (await context.Users.AnyAsync(u => u.Email == registerDto.Email))
             {
+                logger.LogWarning("Email already in use.");
                 return BadRequest("Email already in use.");
             }
 
@@ -52,6 +53,7 @@ namespace ChatRoomAPI.Controllers
 
             context.Users.Add(user);
             await context.SaveChangesAsync();
+            logger.LogDebug("User registered successfully.");
             return Ok("User registered successfully.");
         }
 
@@ -59,14 +61,20 @@ namespace ChatRoomAPI.Controllers
         [HttpPost("login")]
         public async Task<IActionResult> Login(LoginDto loginDto)
         {
-            Console.WriteLine($"Login attempt for email: {loginDto.Email}");
+            if (logger.IsEnabled(LogLevel.Debug))
+                logger.LogDebug("Login attempt for email: {loginDto.Email}", loginDto.Email);
             var user = await context.Users.FirstOrDefaultAsync(u => u.Email == loginDto.Email);
             if (user == null || !BCrypt.Net.BCrypt.Verify(loginDto.Password, user.PasswordHash))
             {
-                Console.WriteLine("Login failed: Invalid email or password.");
+                logger.LogError("Invalid email or password.");
                 return Unauthorized("Invalid email or password.");
             }
-            Console.WriteLine("Login successful.");
+            // Check if user is already logged in, through cache
+            if (GameStateCache.ConnectedClients.TryGetValue(user.Id, out var netPeer)) {
+                logger.LogError("User already logged in");
+                return Unauthorized("User already logged in.");
+            }
+            logger.LogDebug("Login succesful");
             var token = GenerateToken(user);
             return Ok(new LoginResponseDto { Token = token, User = new UserDto { Id = user.Id, Email = user.Email, Username = user.Username, TextColor = user.TextColor } });
         }

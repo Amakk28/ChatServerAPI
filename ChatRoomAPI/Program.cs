@@ -14,6 +14,8 @@ var jwtKey = Environment.GetEnvironmentVariable("JWT_KEY") ?? builder.Configurat
 var jwtIssuer = Environment.GetEnvironmentVariable("JWT_ISSUER") ?? builder.Configuration["Jwt:Issuer"]!;
 var jwtAudience = Environment.GetEnvironmentVariable("JWT_AUDIENCE") ?? builder.Configuration["Jwt:Audience"]!;
 // Add services to the container.
+builder.Logging.AddFilter("Microsoft.AspNetCore", LogLevel.Warning);
+builder.Logging.AddFilter("ChatRoomAPI", LogLevel.Debug);
 builder.Services.AddOpenApi();
 builder.Services.AddControllers();
 builder.Services.AddDbContext<AppDbContext>(options =>
@@ -48,7 +50,6 @@ if (app.Environment.IsDevelopment())
 }
 
 // Middleware
-app.UseHttpsRedirection();
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();
