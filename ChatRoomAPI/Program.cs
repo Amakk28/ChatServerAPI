@@ -3,9 +3,6 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using System.Text;
 using ChatRoomAPI.Data;
-using ChatRoomAPI.Services;
-// using ChatRoomAPI.Hubs;
-// using ChatRoomAPI.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 // Load environment variables from .env file or deployment environment or dotnet user-secrets
@@ -37,9 +34,6 @@ builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
         options.MapInboundClaims = false; // Prevents stupid claim type mapping
     });
 builder.Services.AddAuthorization();
-builder.Services.AddHostedService<LiteNetLibService>();
-// builder.Services.AddSignalR();
-// builder.Services.AddSingleton<IUserIdProvider, NameUserIdProvider>();
 
 var app = builder.Build();
 

@@ -8,11 +8,14 @@ namespace ChatRoomAPI.Models
     public class Unit
     {
         public int Id { get; set; }
+        public required string Name {get; set;}
+        public required string Type {get; set;}
         public required int OwnerPlayerId { get; set; }
         public required int GameStateId { get; set; } // Foreign key to GameState.RoomId
         public int X { get; set; }
         public int Y { get; set; }
         public int Z { get; set; }
+        public float RotationY {get; set;}
         public int Health { get; set; }
         public bool HasMoved { get; set; } 
         public required GameState GameState { get; set; } // Navigation property

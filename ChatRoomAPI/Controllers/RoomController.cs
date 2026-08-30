@@ -28,7 +28,7 @@ namespace ChatRoomAPI.Controllers
                 Id = room.Id,
                 Name = room.Name,
                 CreatedAt = room.CreatedAt,
-                OnlineUsers = GameStateCache.GameStates.TryGetValue(room.Id, out var gameStateDto) ? gameStateDto.Units.Count : 0
+                OnlineUsers = GameStateCache.UserToRoom.Values.Count(roomId => roomId == room.Id)
             });
 
             return Ok(roomsWithOnlineCounts);
@@ -65,15 +65,18 @@ namespace ChatRoomAPI.Controllers
                 TurnNumber = gameState.TurnNumber,
                 Units = [.. gameState.Units.Select(u => new UnitDto
                 {
+                    Name = u.Name,
+                    Type = u.Type,
                     OwnerPlayerId = u.OwnerPlayerId,
                     GameStateId = u.GameStateId,
                     X = u.X,
                     Y = u.Y,
                     Z = u.Z,
+                    RotationY = u.RotationY,
                     HasMoved = u.HasMoved,
                     Health = u.Health
                 })]
-            }; 
+            };
 
             return Ok(gameStateDto);
         }
@@ -136,19 +139,25 @@ namespace ChatRoomAPI.Controllers
 
         // Register a created Unit to the current GameState of the room
         [HttpPost("{id}/units")]
-        public async Task<IActionResult> CreateUnit(int id, CreateUnitDto createUnitDto)
+        [Authorize]
+        public async Task<IActionResult> CreateUnit(int id, UnitDto createUnitDto)
         {
-            var gameStateRoomId = id;
+            var userId = int.Parse(User.FindFirst(JwtRegisteredClaimNames.Sub)?.Value ?? "0");
             var gameState = await context.GameStates.FindAsync(id);
             if (gameState == null)
             {
                 return NotFound("GameState not found for the specified room.");
             }
+
             var unit = new Unit
             {
-                OwnerPlayerId = createUnitDto.OwnerPlayerId,
+                Name = createUnitDto.Name,
+                Type = createUnitDto.Type,
+                OwnerPlayerId = userId,
                 X = createUnitDto.X,
                 Y = createUnitDto.Y,
+                Z = createUnitDto.Z,
+                RotationY = createUnitDto.RotationY,
                 Health = createUnitDto.Health,
                 HasMoved = createUnitDto.HasMoved,
                 GameStateId = id,
@@ -156,9 +165,28 @@ namespace ChatRoomAPI.Controllers
             };
             context.Units.Add(unit);
             await context.SaveChangesAsync();
-            return CreatedAtAction(nameof(GetRoomUnits), new { id = gameStateRoomId }, unit);
-        }
 
+            var createdUnitDto = new UnitDto
+            {
+                Name = unit.Name,
+                Type = unit.Type,
+                OwnerPlayerId = unit.OwnerPlayerId,
+                GameStateId = unit.GameStateId,
+                X = unit.X,
+                Y = unit.Y,
+                Z = unit.Z,
+                RotationY = unit.RotationY,
+                Health = unit.Health,
+                HasMoved = unit.HasMoved
+            };
+
+            if (GameStateCache.GameStates.TryGetValue(gameState.RoomId, out var cachedGameState))
+            {
+                cachedGameState.Units.Add(createdUnitDto);
+            }
+
+            return Ok(createdUnitDto);
+        }
         [HttpDelete("{id}")]
         [Authorize]
         public async Task<IActionResult> DeleteRoom(int id)

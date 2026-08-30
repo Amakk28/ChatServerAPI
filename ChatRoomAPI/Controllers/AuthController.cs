@@ -69,11 +69,6 @@ namespace ChatRoomAPI.Controllers
                 logger.LogError("Invalid email or password.");
                 return Unauthorized("Invalid email or password.");
             }
-            // Check if user is already logged in, through cache
-            if (GameStateCache.ConnectedClients.TryGetValue(user.Id, out var netPeer)) {
-                logger.LogError("User already logged in");
-                return Unauthorized("User already logged in.");
-            }
             logger.LogDebug("Login succesful");
             var token = GenerateToken(user);
             return Ok(new LoginResponseDto { Token = token, User = new UserDto { Id = user.Id, Email = user.Email, Username = user.Username, TextColor = user.TextColor } });
